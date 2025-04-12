@@ -7,23 +7,37 @@ from bs4 import BeautifulSoup
 # Auth Context Manager Class
 # ----------------------------
 class Auth:
-    def __init__(self,tc:str,password:str):
+    def __init__(self, tc: str, password: str):
         self.session = requests.Session()
         self.login_url = "https://bilgimerkezi.bilfenlisesi.com/login"
-        # Replace with your valid login credentials
         self.login_payload = f"tc={tc}&password={password}"
         self.headers = {
             "User-Agent": "Mozilla/5.0",
             "Content-Type": "application/x-www-form-urlencoded",
         }
+        self.target_url = "https://bilgimerkezi.bilfenlisesi.com" # Target URL after login
+        self.verified = False
 
     def __enter__(self):
-        response = self.session.post(self.login_url, data=self.login_payload, headers=self.headers)
-        if response.ok:
-            print("Logged in successfully!")
+        response = self.session.post(self.login_url, data=self.login_payload, headers=self.headers, allow_redirects=False) # Don't auto-redirect
+
+        if response.status_code == 302: # Check for redirect status code
+             #Get redirect url
+            redirect_url = response.headers.get('Location')
+            if redirect_url == '/':
+                  # Manual redirect to the final target URL to handle potential JavaScript or further actions
+                  response = self.session.get(self.target_url)
+                  if response.ok :
+                      print("Login successful!")
+                      self.verified = True
+                  else:
+                       print("Secondary redirect failed:", response.status_code)
+            else:
+                self.verified=False
+
         else:
-            print("Login failed:", response.status_code)
-        return self.session
+            raise("Login failed:", response.status_code)
+        return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.session.close()
@@ -335,31 +349,40 @@ def get_kks_exam_info(session):
     html = get_kks_exam_page(session)
     return parse_kks_exam(html)
 
+# ----------------------------
+# Main Execution Block
+# ----------------------------
 if __name__ == "__main__":
     # Replace with your actual TC and password
-    tc_number = "YOUR_TC_NUMBER"
-    password = "YOUR_PASSWORD"
+    tc_number = "tc_number"
+    password = "password"
 
-    with Auth(tc_number, password) as session:
-        if session:
+    with Auth(tc_number, password) as auth:
+        if auth.verified:
+            print("Authentication successful. Proceeding with protected actions...")
             try:
-                profile_data = get_profile_info(session)
+                profile_data = get_profile_info(auth.session)
                 print("\n--- Profile Information ---")
                 print(profile_data)
 
-                club_data = get_club_selections(session)
+                club_data = get_club_selections(auth.session)
                 print("\n--- Club Selections ---")
                 print(club_data)
 
-                written_exam_data = get_written_exam_info(session)
+                written_exam_data = get_written_exam_info(auth.session)
                 print("\n--- Written Exam Results ---")
                 print(written_exam_data)
 
-                kks_exam_data = get_kks_exam_info(session)
+                kks_exam_data = get_kks_exam_info(auth.session)
                 print("\n--- KKS Exam Results ---")
                 print(kks_exam_data)
 
             except requests.exceptions.RequestException as e:
-                print(f"An error occurred during the request: {e}")
+                print(f"\nAn error occurred during a data request after successful login: {e}")
             except Exception as e:
-                print(f"An unexpected error occurred: {e}")
+                print(f"\nAn unexpected error occurred after login: {e}")
+                import traceback
+                traceback.print_exc() # Print stack trace for debugging parser issues
+
+        else:
+            print("\nAuthentication failed. Cannot proceed to fetch data.")
