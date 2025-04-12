@@ -1,12 +1,12 @@
 # Bilauth
 
-**Bilauth** is a Python module that enables programmatic access to Bilfen Lisesi's student portal, offering tools for authentication, data scraping, and structured parsing of profile, exam, and club information. Designed for Bilfen students and developers, Bilauth powers student-only tools, early-stage app testing, and competition-specific access scenarios.
+**Bilauth** is a Python module that enables programmatic access to Bilfen Lisesi's student portal. It provides tools for session-based authentication, HTML scraping, and structured parsing of student data like profiles, exams, and clubs.
 
 ---
 
 ## 📦 Installation
 
-Install directly from PyPI:
+Install from PyPI:
 
 ```bash
 pip install bilauth
@@ -16,61 +16,107 @@ pip install bilauth
 
 ## 📚 Features
 
-- 🔐 **Session-based authentication** with a context manager
-- 📄 Fetch pages: profile, KKS results, written exams, club selections
-- 🧠 Parse HTML into structured dictionaries
-- 🧰 High-level data extraction for easy use in apps and interfaces
+- 🔐 **Context-managed session authentication**
+- 📄 Fetch pages: profile, KKS exams, written exams, club selections
+- 🧠 Parse HTML to structured Python dictionaries
+- 🎯 High-level fetch + parse functions for quick integration
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Example Usage
 
 ```python
 from bilauth import Auth, get_profile_info, get_club_selections, get_written_exam_info, get_kks_exam_info
+import requests
 
-with Auth(tc="your_tc", password="your_password") as session:
-    print(get_profile_info(session))
-    print(get_club_selections(session))
-    print(get_written_exam_info(session))
-    print(get_kks_exam_info(session))
+if __name__ == "__main__":
+    # Replace with your actual TC and password
+    tc_number = "YOUR_TC_NUMBER"
+    password = "YOUR_PASSWORD"
+
+    with Auth(tc_number, password) as auth:
+        if auth.verified:
+            print("Authentication successful. Proceeding with protected actions...")
+            try:
+                profile_data = get_profile_info(auth.session)
+                print("\n--- Profile Information ---")
+                print(profile_data)
+
+                club_data = get_club_selections(auth.session)
+                print("\n--- Club Selections ---")
+                print(club_data)
+
+                written_exam_data = get_written_exam_info(auth.session)
+                print("\n--- Written Exam Results ---")
+                print(written_exam_data)
+
+                kks_exam_data = get_kks_exam_info(auth.session)
+                print("\n--- KKS Exam Results ---")
+                print(kks_exam_data)
+
+            except requests.exceptions.RequestException as e:
+                print(f"\nAn error occurred during a data request after successful login: {e}")
+            except Exception as e:
+                print(f"\nAn unexpected error occurred after login: {e}")
+                import traceback
+                traceback.print_exc()
+
+        else:
+            print("\nAuthentication failed. Cannot proceed to fetch data.")
 ```
 
 ---
 
-## 🔧 Functions Overview
+## 🔧 API Overview
 
-### 🔐 Auth Context Manager
+### 🔐 `Auth` – Context Manager
+
 ```python
 Auth(tc: str, password: str)
 ```
-- Logs in on enter, closes session on exit.
 
-### 📄 Fetch Functions
+- Automatically logs in on context enter.
+- Closes session on exit.
+- Use `.verified` to check login status.
+
+---
+
+### 📄 Low-Level Fetchers
+
 ```python
 get_profile_page(session)
 get_club_page(session)
-get_kks_exam_page(session)
 get_written_exam_page(session)
+get_kks_exam_page(session)
 ```
-- Low-level HTML fetchers.
+
+- Fetch raw HTML from the student portal.
+
+---
 
 ### 🧠 Parsing Functions
+
 ```python
 parse_profile_info(html)
 parse_club_info(html)
 parse_written_exam(html)
 parse_kks_exam(html)
 ```
-- Turn HTML into usable Python dictionaries.
+
+- Convert HTML into structured Python dictionaries.
+
+---
 
 ### 🎯 High-Level Helpers
+
 ```python
 get_profile_info(session)
 get_club_selections(session)
 get_written_exam_info(session)
 get_kks_exam_info(session)
 ```
-- Fetch + parse combined.
+
+- Combine fetching + parsing in one step.
 
 ---
 
@@ -80,6 +126,7 @@ get_kks_exam_info(session)
 - `beautifulsoup4`
 
 Install manually if needed:
+
 ```bash
 pip install requests beautifulsoup4
 ```
@@ -88,24 +135,24 @@ pip install requests beautifulsoup4
 
 ## 🤝 Contributing
 
-1. Fork the repo
-2. Create your feature branch
-3. Write clear docstrings and follow [PEP8](https://peps.python.org/pep-0008/)
+1. Fork this repository
+2. Create a new feature branch
+3. Follow [PEP8](https://peps.python.org/pep-0008/) and add docstrings
 4. Submit a PR
 
 ---
 
 ## 📄 License
 
-Licensed under the **BILAUTH OPEN DECLARATION LICENSE (BODL)**. See `LICENSE` for full terms.
+Licensed under the **BILAUTH OPEN DECLARATION LICENSE (BODL)**. See the `LICENSE` file for full terms.
 
 ---
 
 ## 💬 Attribution
 
-Built for and by the Bilfen student community. Designed by Kağan Erkan.
+Built for and by the Bilfen student community.  
+Designed by **Kağan Erkan**.
 
-Want to show you're compliant? Use the badge:
+Want to show you’re compliant? Add the badge:
 
 **Built with Bilauth 🛡️**
-
