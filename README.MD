@@ -2,7 +2,7 @@
 
 ---
 
-# Bilauth
+# Bilauth-[Discontinued]
 
 **Bilauth** is a Python module that enables programmatic access to Bilfen Lisesi's student portal. It provides tools for session-based authentication, HTML scraping, and structured parsing of student data like profiles, exams, and clubs.
 
